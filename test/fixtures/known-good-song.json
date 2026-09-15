@@ -1,0 +1,12 @@
+{
+  "_comment": "Known-good song fixture for the offline Athan path: PDF2PDF-style Flex Data UMPs. Tempo 120, key C major, chords C7 -> Dm7 -> G7 -> clear -> C7. Words built per MIDI 2.0 UMP spec (mt=0xD, group 0, format 0, bank 0): header=(0xd<<28)|(status), chord w1=(sf<<28)|(tonicLetter<<24)|(chordType<<16), keysig w1=(sf<<28)|(tonicLetter<<24). Letters A=1..G=7.",
+  "events": [
+    { "label": "Set Tempo 120 bpm", "ump": [3489660928, 50000000, 0, 0] },
+    { "label": "Set Key Signature C major (sf=0, tonic C)", "ump": [3489660933, 50331648, 0, 0] },
+    { "label": "Set Chord Name C Dominant (C7)", "ump": [3489660934, 51183616, 0, 0] },
+    { "label": "Set Chord Name D Minor 7th (Dm7)", "ump": [3489660934, 67699712, 0, 0] },
+    { "label": "Set Chord Name G Dominant (G7)", "ump": [3489660934, 118292480, 0, 0] },
+    { "label": "Set Chord Name clear (type 0x00)", "ump": [3489660934, 0, 0, 0] },
+    { "label": "Set Chord Name C Dominant again (recovery)", "ump": [3489660934, 51183616, 0, 0] }
+  ]
+}
