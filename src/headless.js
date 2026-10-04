@@ -34,13 +34,39 @@ export function createHeadlessAdapter({
   const mapper = createMapper({ scaleData: ScaleData, chordDict });
   const sink = createLocalSink({ url });
 
+  // Full harmony state, merged from every commit. After the bridge drops
+  // (Ableton restarted, device reloaded) the first write back — or the 2s
+  // retry — carries the COMPLETE state, so a reconnected bridge never sits
+  // on stale harmony waiting for fields that were duplicate-suppressed.
+  const state = {};
+  let online = true;
+  let retryTimer = null;
+
+  function write(patch) {
+    sink
+      .write(patch)
+      .then((body) => {
+        online = true;
+        if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+        onStatus(true, body);
+      })
+      .catch((err) => {
+        online = false;
+        onStatus(false, err.message);
+        if (!retryTimer) {
+          retryTimer = setTimeout(() => {
+            retryTimer = null;
+            if (!online && Object.keys(state).length) write({ ...state });
+          }, 2000);
+        }
+      });
+  }
+
   const batcher = createBatcher({
     windowMs,
     commit(patch) {
-      sink
-        .write(patch)
-        .then((body) => onStatus(true, body))
-        .catch((err) => onStatus(false, err.message));
+      Object.assign(state, patch);
+      write(online ? patch : { ...state });
     },
   });
 
@@ -75,6 +101,10 @@ export function createHeadlessAdapter({
 
     if (decoded.kind === "chordName") {
       const { chordKey, chordInfo, meta } = mapper.mapChord(decoded);
+      // A chord and its slash bass are one statement: clear duplicate
+      // suppression so chordData, chordInfo and externalBassPc always
+      // travel in the same patch (C/E → Am/E must not lose the E).
+      batcher.resetDuplicateSuppression();
       if (meta.cleared) {
         batcher.push({ chordKey: null, chordInfo: null, externalBassPc: null }, source);
         return decoded;
